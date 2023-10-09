@@ -357,6 +357,13 @@ func (s *Scraper) LoginOpenAccount() (OpenAccount, error) {
 	return OpenAccount{}, fmt.Errorf("auth error: %v", "OpenAccount")
 }
 
+func (s *Scraper) WithOpenAccount(openAccount OpenAccount) {
+	s.oAuthToken = openAccount.OAuthToken
+	s.oAuthSecret = openAccount.OAuthTokenSecret
+	s.isLogged = true
+	s.isOpenAccount = true
+}
+
 // Logout is reset session
 func (s *Scraper) Logout() error {
 	req, err := http.NewRequest("POST", logoutURL, nil)
