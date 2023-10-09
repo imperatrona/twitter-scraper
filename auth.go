@@ -26,6 +26,11 @@ const (
 )
 
 type (
+	OpenAccount struct {
+		OAuthToken       string `json:"oauth_token"`
+		OAuthTokenSecret string `json:"oauth_token_secret"`
+	}
+
 	flow struct {
 		Errors []struct {
 			Code    int    `json:"code"`
@@ -34,11 +39,8 @@ type (
 		FlowToken string `json:"flow_token"`
 		Status    string `json:"status"`
 		Subtasks  []struct {
-			SubtaskID   string `json:"subtask_id"`
-			OpenAccount struct {
-				OAuthToken       string `json:"oauth_token"`
-				OAuthTokenSecret string `json:"oauth_token_secret"`
-			} `json:"open_account"`
+			SubtaskID   string      `json:"subtask_id"`
+			OpenAccount OpenAccount `json:"open_account"`
 		} `json:"subtasks"`
 	}
 
@@ -296,16 +298,16 @@ func (s *Scraper) Login(credentials ...string) error {
 }
 
 // LoginOpenAccount as Twitter app
-func (s *Scraper) LoginOpenAccount() error {
+func (s *Scraper) LoginOpenAccount() (OpenAccount, error) {
 	accessToken, err := s.getAccessToken(appConsumerKey, appConsumerSecret)
 	if err != nil {
-		return err
+		return OpenAccount{}, err
 	}
 	s.setBearerToken(accessToken)
 
 	err = s.GetGuestToken()
 	if err != nil {
-		return err
+		return OpenAccount{}, err
 	}
 
 	// flow start
@@ -320,7 +322,7 @@ func (s *Scraper) LoginOpenAccount() error {
 	}
 	flowToken, err := s.getFlowToken(data)
 	if err != nil {
-		return err
+		return OpenAccount{}, err
 	}
 
 	// flow next link
@@ -334,7 +336,7 @@ func (s *Scraper) LoginOpenAccount() error {
 	}
 	info, err := s.getFlow(data)
 	if err != nil {
-		return err
+		return OpenAccount{}, err
 	}
 
 	if info.Subtasks != nil && len(info.Subtasks) > 0 {
@@ -342,14 +344,17 @@ func (s *Scraper) LoginOpenAccount() error {
 			s.oAuthToken = info.Subtasks[0].OpenAccount.OAuthToken
 			s.oAuthSecret = info.Subtasks[0].OpenAccount.OAuthTokenSecret
 			if s.oAuthToken == "" || s.oAuthSecret == "" {
-				return fmt.Errorf("auth error: %v", "Token or Secret is empty")
+				return OpenAccount{}, fmt.Errorf("auth error: %v", "Token or Secret is empty")
 			}
 			s.isLogged = true
 			s.isOpenAccount = true
-			return nil
+			return OpenAccount{
+				OAuthToken:       info.Subtasks[0].OpenAccount.OAuthToken,
+				OAuthTokenSecret: info.Subtasks[0].OpenAccount.OAuthTokenSecret,
+			}, nil
 		}
 	}
-	return fmt.Errorf("auth error: %v", "OpenAccount")
+	return OpenAccount{}, fmt.Errorf("auth error: %v", "OpenAccount")
 }
 
 // Logout is reset session

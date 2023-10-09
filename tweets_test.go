@@ -21,7 +21,7 @@ func TestGetTweets(t *testing.T) {
 	maxTweetsNbr := 300
 	dupcheck := make(map[string]bool)
 	scraper := twitterscraper.New()
-	err := scraper.LoginOpenAccount()
+	_, err := scraper.LoginOpenAccount()
 	if err != nil {
 		t.Fatalf("LoginOpenAccount() error = %v", err)
 	}
