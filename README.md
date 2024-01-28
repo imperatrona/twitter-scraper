@@ -85,6 +85,15 @@ If you don't want to use your account, you can try login as a Twitter app:
 account, err := scraper.LoginOpenAccount()
 ```
 
+You can manually set a specific user account:
+
+```golang
+scraper.WithOpenAccount(twitterscraper.OpenAccount{
+    OAuthToken: "TOKEN",
+    OAuthTokenSecret: "TOKEN_SECRET",
+})
+```
+
 ### Get user tweets
 
 ```golang
@@ -173,7 +182,6 @@ The search ends if we have 50 tweets.
 
 See [Rules and filtering](https://developer.twitter.com/en/docs/tweets/rules-and-filtering/overview/standard-operators) for build standard queries.
 
-
 #### Set search mode
 
 ```golang
@@ -182,11 +190,11 @@ scraper.SetSearchMode(twitterscraper.SearchLatest)
 
 Options:
 
-* `twitterscraper.SearchTop` - default mode
-* `twitterscraper.SearchLatest` - live mode
-* `twitterscraper.SearchPhotos` - image mode
-* `twitterscraper.SearchVideos` - video mode
-* `twitterscraper.SearchUsers` - user mode
+- `twitterscraper.SearchTop` - default mode
+- `twitterscraper.SearchLatest` - live mode
+- `twitterscraper.SearchPhotos` - image mode
+- `twitterscraper.SearchVideos` - video mode
+- `twitterscraper.SearchUsers` - user mode
 
 ### Get profile
 
