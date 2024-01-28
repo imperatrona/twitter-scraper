@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	twitterscraper "github.com/n0madic/twitter-scraper"
+	twitterscraper "github.com/imperatrona/twitter-scraper"
 )
 
 var cmpOptions = cmp.Options{
