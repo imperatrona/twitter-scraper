@@ -82,7 +82,16 @@ scraper.IsLoggedIn()
 If you don't want to use your account, you can try login as a Twitter app:
 
 ```golang
-err := scraper.LoginOpenAccount()
+account, err := scraper.LoginOpenAccount()
+```
+
+You can manually set a specific user account:
+
+```golang
+scraper.WithOpenAccount(twitterscraper.OpenAccount{
+    OAuthToken: "TOKEN",
+    OAuthTokenSecret: "TOKEN_SECRET",
+})
 ```
 
 ### Get user tweets
@@ -98,7 +107,7 @@ import (
 
 func main() {
     scraper := twitterscraper.New()
-    err := scraper.LoginOpenAccount()
+    account, err := scraper.LoginOpenAccount()
     if err != nil {
         panic(err)
     }
