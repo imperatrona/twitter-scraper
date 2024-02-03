@@ -5,10 +5,7 @@ import (
 )
 
 // FetchFollowingByUserID gets following profiles list for a given userID, via the Twitter frontend GraphQL API.
-func (s *Scraper) FetchFollowingByUserID(userID string, maxFollowingNbr int, cursor string) ([]*Profile, string, error) {
-	if maxFollowingNbr > 200 {
-		maxFollowingNbr = 200
-	}
+func (s *Scraper) FetchFollowingByUserID(userID string, cursor string) ([]*Profile, string, error) {
 
 	req, err := s.newRequest("GET", "https://twitter.com/i/api/graphql/oUxds-Fprv5NKsH67zPt5w/Following")
 	if err != nil {
@@ -17,7 +14,6 @@ func (s *Scraper) FetchFollowingByUserID(userID string, maxFollowingNbr int, cur
 
 	variables := map[string]interface{}{
 		"userId":                 userID,
-		"count":                  maxFollowingNbr,
 		"includePromotedContent": false,
 	}
 	features := map[string]interface{}{
