@@ -1,6 +1,6 @@
 # Twitter Scraper
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/n0madic/twitter-scraper.svg)](https://pkg.go.dev/github.com/n0madic/twitter-scraper)
+[![Go Reference](https://pkg.go.dev/badge/github.com/joacoesteban/twitter-scraper.svg)](https://pkg.go.dev/github.com/joacoesteban/twitter-scraper)
 
 Twitter's API is annoying to work with, and has lots of limitations —
 luckily their frontend (JavaScript) has it's own API, which I reverse-engineered.
@@ -11,7 +11,7 @@ You can use this library to get the text of any user's Tweets trivially.
 ## Installation
 
 ```shell
-go get -u github.com/n0madic/twitter-scraper
+go get -u github.com/joacoesteban/twitter-scraper
 ```
 
 ## Usage
@@ -93,7 +93,7 @@ package main
 import (
     "context"
     "fmt"
-    twitterscraper "github.com/n0madic/twitter-scraper"
+    twitterscraper "github.com/joacoesteban/twitter-scraper"
 )
 
 func main() {
@@ -121,7 +121,7 @@ package main
 import (
     "fmt"
 
-    twitterscraper "github.com/n0madic/twitter-scraper"
+    twitterscraper "github.com/joacoesteban/twitter-scraper"
 )
 
 func main() {
@@ -150,7 +150,7 @@ package main
 import (
     "context"
     "fmt"
-    twitterscraper "github.com/n0madic/twitter-scraper"
+    twitterscraper "github.com/joacoesteban/twitter-scraper"
 )
 
 func main() {
@@ -173,7 +173,6 @@ The search ends if we have 50 tweets.
 
 See [Rules and filtering](https://developer.twitter.com/en/docs/tweets/rules-and-filtering/overview/standard-operators) for build standard queries.
 
-
 #### Set search mode
 
 ```golang
@@ -182,11 +181,11 @@ scraper.SetSearchMode(twitterscraper.SearchLatest)
 
 Options:
 
-* `twitterscraper.SearchTop` - default mode
-* `twitterscraper.SearchLatest` - live mode
-* `twitterscraper.SearchPhotos` - image mode
-* `twitterscraper.SearchVideos` - video mode
-* `twitterscraper.SearchUsers` - user mode
+- `twitterscraper.SearchTop` - default mode
+- `twitterscraper.SearchLatest` - live mode
+- `twitterscraper.SearchPhotos` - image mode
+- `twitterscraper.SearchVideos` - video mode
+- `twitterscraper.SearchUsers` - user mode
 
 ### Get profile
 
@@ -195,7 +194,7 @@ package main
 
 import (
     "fmt"
-    twitterscraper "github.com/n0madic/twitter-scraper"
+    twitterscraper "github.com/joacoesteban/twitter-scraper"
 )
 
 func main() {
@@ -217,7 +216,7 @@ package main
 import (
     "context"
     "fmt"
-    twitterscraper "github.com/n0madic/twitter-scraper"
+    twitterscraper "github.com/joacoesteban/twitter-scraper"
 )
 
 func main() {
@@ -242,7 +241,7 @@ package main
 
 import (
     "fmt"
-    twitterscraper "github.com/n0madic/twitter-scraper"
+    twitterscraper "github.com/joacoesteban/twitter-scraper"
 )
 
 func main() {
