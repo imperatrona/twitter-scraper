@@ -62,7 +62,7 @@ func (timeline *searchTimeline) parseUsers() ([]*Profile, string) {
 			}
 			for _, entry := range instruction.Entries {
 				if entry.Content.ItemContent.UserDisplayType == "User" {
-					if profile := parseProfile(entry.Content.ItemContent.UserResults.Result.Legacy); profile.Name != "" {
+					if profile := parseProfileV2(entry.Content.ItemContent.UserResults.Result); profile.Name != "" {
 						if profile.UserID == "" {
 							profile.UserID = entry.Content.ItemContent.UserResults.Result.RestID
 						}
