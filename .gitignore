@@ -1,3 +1,4 @@
 *.htm?
 *.json
 .idea/
+tmp
