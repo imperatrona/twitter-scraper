@@ -47,20 +47,22 @@ func (result *result) parse() *Tweet {
 	return tw
 }
 
+type item struct {
+	Item struct {
+		ItemContent struct {
+			TweetDisplayType string `json:"tweetDisplayType"`
+			TweetResults     struct {
+				Result result `json:"result"`
+			} `json:"tweet_results"`
+		} `json:"itemContent"`
+	} `json:"item"`
+}
+
 type entry struct {
 	Content struct {
-		CursorType string `json:"cursorType"`
-		Value      string `json:"value"`
-		Items      []struct {
-			Item struct {
-				ItemContent struct {
-					TweetDisplayType string `json:"tweetDisplayType"`
-					TweetResults     struct {
-						Result result `json:"result"`
-					} `json:"tweet_results"`
-				} `json:"itemContent"`
-			} `json:"item"`
-		} `json:"items"`
+		CursorType  string `json:"cursorType"`
+		Value       string `json:"value"`
+		Items       []item `json:"items"`
 		ItemContent struct {
 			TweetDisplayType string `json:"tweetDisplayType"`
 			TweetResults     struct {
@@ -85,9 +87,10 @@ type timelineV2 struct {
 				TimelineV2 struct {
 					Timeline struct {
 						Instructions []struct {
-							Entries []entry `json:"entries"`
-							Entry   entry   `json:"entry"`
-							Type    string  `json:"type"`
+							ModuleItems []item  `json:"moduleItems"`
+							Entries     []entry `json:"entries"`
+							Entry       entry   `json:"entry"`
+							Type        string  `json:"type"`
 						} `json:"instructions"`
 					} `json:"timeline"`
 				} `json:"timeline_v2"`
@@ -108,6 +111,22 @@ func (timeline *timelineV2) parseTweets() ([]*Tweet, string) {
 			if entry.Content.ItemContent.TweetResults.Result.Typename == "Tweet" {
 				if tweet := entry.Content.ItemContent.TweetResults.Result.parse(); tweet != nil {
 					tweets = append(tweets, tweet)
+				}
+			}
+			if len(entry.Content.Items) > 0 {
+				for _, item := range entry.Content.Items {
+					if tweet := item.Item.ItemContent.TweetResults.Result.parse(); tweet != nil {
+						tweets = append(tweets, tweet)
+					}
+				}
+			}
+		}
+		if len(instruction.ModuleItems) > 0 {
+			for _, entry := range instruction.ModuleItems {
+				if entry.Item.ItemContent.TweetResults.Result.Typename == "Tweet" {
+					if tweet := entry.Item.ItemContent.TweetResults.Result.parse(); tweet != nil {
+						tweets = append(tweets, tweet)
+					}
 				}
 			}
 		}
