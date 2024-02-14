@@ -386,6 +386,7 @@ func parseProfileV2(user userResult) Profile {
 		URL:            "https://twitter.com/" + u.ScreenName,
 		UserID:         user.ID,
 		Username:       u.ScreenName,
+		Sensitive:      u.PossiblySensitive,
 	}
 
 	tm, err := time.Parse(time.RubyDate, u.CreatedAt)
