@@ -122,6 +122,32 @@ func main() {
 
 It appears you can ask for up to 50 tweets.
 
+### Get user medias
+
+```golang
+package main
+
+import (
+    "context"
+    "fmt"
+    twitterscraper "github.com/imperatrona/twitter-scraper"
+)
+
+func main() {
+    scraper := twitterscraper.New()
+    account, err := scraper.LoginOpenAccount()
+    if err != nil {
+        panic(err)
+    }
+    for tweet := range scraper.GetMediaTweets(context.Background(), "Twitter", 50) {
+        if tweet.Error != nil {
+            panic(tweet.Error)
+        }
+        fmt.Println(tweet.Text)
+    }
+}
+```
+
 ### Get single tweet
 
 ```golang
