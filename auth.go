@@ -401,13 +401,14 @@ func (s *Scraper) SetCookies(cookies []*http.Cookie) {
 	s.client.Jar.SetCookies(twURL, cookies)
 }
 
-func (s *Scraper) SetAuthToken(authToken string, ct0 string) {
-	var (
-		cookies []*http.Cookie
-		expires = time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)
-	)
+func (s *Scraper) ClearCookies() {
+	s.client.Jar, _ = cookiejar.New(nil)
+}
 
-	cookies = append(cookies, &http.Cookie{
+// Auth using auth_token and ct0 cookies
+func (s *Scraper) SetAuthToken(authToken string, ct0 string) {
+	expires := time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)
+	cookies := []*http.Cookie{{
 		Name:       "auth_token",
 		Value:      authToken,
 		Path:       "",
@@ -419,9 +420,8 @@ func (s *Scraper) SetAuthToken(authToken string, ct0 string) {
 		HttpOnly:   false,
 		SameSite:   0,
 		Raw:        "",
-	})
-
-	cookies = append(cookies, &http.Cookie{
+		Unparsed:   nil,
+	}, {
 		Name:       "ct0",
 		Value:      ct0,
 		Path:       "",
@@ -433,13 +433,10 @@ func (s *Scraper) SetAuthToken(authToken string, ct0 string) {
 		HttpOnly:   false,
 		SameSite:   0,
 		Raw:        "",
-	})
-	
-	s.SetCookies(cookies)
-}
+		Unparsed:   nil,
+	}}
 
-func (s *Scraper) ClearCookies() {
-	s.client.Jar, _ = cookiejar.New(nil)
+	s.SetCookies(cookies)
 }
 
 func (s *Scraper) sign(method string, ref *url.URL) string {
