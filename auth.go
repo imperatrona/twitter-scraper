@@ -401,6 +401,43 @@ func (s *Scraper) SetCookies(cookies []*http.Cookie) {
 	s.client.Jar.SetCookies(twURL, cookies)
 }
 
+func (s *Scraper) SetAuthToken(authToken string, ct0 string) {
+	var (
+		cookies []*http.Cookie
+		expires = time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)
+	)
+
+	cookies = append(cookies, &http.Cookie{
+		Name:       "auth_token",
+		Value:      authToken,
+		Path:       "",
+		Domain:     "twitter.com",
+		Expires:    expires,
+		RawExpires: "",
+		MaxAge:     0,
+		Secure:     false,
+		HttpOnly:   false,
+		SameSite:   0,
+		Raw:        "",
+	})
+
+	cookies = append(cookies, &http.Cookie{
+		Name:       "ct0",
+		Value:      ct0,
+		Path:       "",
+		Domain:     "twitter.com",
+		Expires:    expires,
+		RawExpires: "",
+		MaxAge:     0,
+		Secure:     false,
+		HttpOnly:   false,
+		SameSite:   0,
+		Raw:        "",
+	})
+	
+	s.SetCookies(cookies)
+}
+
 func (s *Scraper) ClearCookies() {
 	s.client.Jar, _ = cookiejar.New(nil)
 }
