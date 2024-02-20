@@ -1,0 +1,28 @@
+{
+  // Most test requiers some auth, prefer using auth token to prevent get banned.
+  "go.testEnvVars": {
+    // Skip all tests that requires auth
+    "SKIP_AUTH_TEST": "",
+
+    // Test auth token
+    "AUTH_TOKEN": "",
+    "CT0": "",
+
+    // Test auth with cookies
+    "COOKIES": "",
+
+    // Test login & password
+    "TWITTER_USERNAME": "",
+    "TWITTER_PASSWORD": "",
+    "TWITTER_EMAIL": "",
+
+    // Test open account
+    "TEST_OPEN_ACCOUNT": "",
+    "OAUTH_TOKEN": "",
+    "OAUTH_SECRET": "",
+
+    // Test with proxy
+    "PROXY": "",
+    "PROXY_REQUIRED": ""
+  }
+}

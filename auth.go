@@ -405,6 +405,40 @@ func (s *Scraper) ClearCookies() {
 	s.client.Jar, _ = cookiejar.New(nil)
 }
 
+// Auth using auth_token and ct0 cookies
+func (s *Scraper) SetAuthToken(authToken string, ct0 string) {
+	expires := time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)
+	cookies := []*http.Cookie{{
+		Name:       "auth_token",
+		Value:      authToken,
+		Path:       "",
+		Domain:     "twitter.com",
+		Expires:    expires,
+		RawExpires: "",
+		MaxAge:     0,
+		Secure:     false,
+		HttpOnly:   false,
+		SameSite:   0,
+		Raw:        "",
+		Unparsed:   nil,
+	}, {
+		Name:       "ct0",
+		Value:      ct0,
+		Path:       "",
+		Domain:     "twitter.com",
+		Expires:    expires,
+		RawExpires: "",
+		MaxAge:     0,
+		Secure:     false,
+		HttpOnly:   false,
+		SameSite:   0,
+		Raw:        "",
+		Unparsed:   nil,
+	}}
+
+	s.SetCookies(cookies)
+}
+
 func (s *Scraper) sign(method string, ref *url.URL) string {
 	m := make(map[string]string)
 	m["oauth_consumer_key"] = appConsumerKey

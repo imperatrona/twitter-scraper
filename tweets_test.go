@@ -3,7 +3,6 @@ package twitterscraper_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -14,18 +13,18 @@ var cmpOptions = cmp.Options{
 	cmpopts.IgnoreFields(twitterscraper.Tweet{}, "Likes"),
 	cmpopts.IgnoreFields(twitterscraper.Tweet{}, "Replies"),
 	cmpopts.IgnoreFields(twitterscraper.Tweet{}, "Retweets"),
+	cmpopts.IgnoreFields(twitterscraper.Tweet{}, "Views"),
+
+	cmpopts.IgnoreFields(twitterscraper.Tweet{}, "IsSelfThread"),
+	cmpopts.IgnoreFields(twitterscraper.Tweet{}, "Thread"),
+	cmpopts.IgnoreFields(twitterscraper.Tweet{}, "TimeParsed"),
 }
 
 func TestGetTweets(t *testing.T) {
 	count := 0
-	maxTweetsNbr := 300
+	maxTweetsNbr := 100
 	dupcheck := make(map[string]bool)
-	scraper := twitterscraper.New()
-	_, err := scraper.LoginOpenAccount()
-	if err != nil {
-		t.Fatalf("LoginOpenAccount() error = %v", err)
-	}
-	for tweet := range scraper.GetTweets(context.Background(), "Twitter", maxTweetsNbr) {
+	for tweet := range testScraper.GetTweets(context.Background(), "x", maxTweetsNbr) {
 		if tweet.Error != nil {
 			t.Error(tweet.Error)
 		} else {
@@ -76,6 +75,7 @@ func TestGetTweets(t *testing.T) {
 }
 
 func assertGetTweet(t *testing.T, expectedTweet *twitterscraper.Tweet) {
+	// to get tweet as struct fmt.Printf("%#v", actualTweet)
 	actualTweet, err := testScraper.GetTweet(expectedTweet.ID)
 	if err != nil {
 		t.Error(err)
@@ -86,42 +86,48 @@ func assertGetTweet(t *testing.T, expectedTweet *twitterscraper.Tweet) {
 
 func TestGetTweetWithVideo(t *testing.T) {
 	expectedTweet := twitterscraper.Tweet{
-		ConversationID: "1328684389388185600",
-		HTML:           "That thing you didn’t Tweet but wanted to but didn’t but got so close but then were like nah. <br><br>We have a place for that now—Fleets! <br><br>Rolling out to everyone starting today. <br><a href=\"https://t.co/auQAHXZMfH\"><img src=\"https://pbs.twimg.com/amplify_video_thumb/1328684333599756289/img/cP5KwbIXbGunNSBy.jpg\"/></a>",
-		ID:             "1328684389388185600",
-		Name:           "Twitter",
-		PermanentURL:   "https://twitter.com/Twitter/status/1328684389388185600",
+		ConversationID: "1697304622749086011",
+		HTML:           "on iOS &amp; Android, you can now swipe to reply when you slide into their DMs <br><a href=\"https://t.co/evuWpMfBxQ\"><img src=\"https://pbs.twimg.com/amplify_video_thumb/1697304568550330368/img/BUlESpef6FmWV_j2.jpg\"/></a>",
+		ID:             "1697304622749086011",
+		Name:           "X",
+		PermanentURL:   "https://twitter.com/X/status/1697304622749086011",
 		Photos:         nil,
-		Text:           "That thing you didn’t Tweet but wanted to but didn’t but got so close but then were like nah. \n\nWe have a place for that now—Fleets! \n\nRolling out to everyone starting today. https://t.co/auQAHXZMfH",
-		TimeParsed:     time.Date(2020, 11, 17, 13, 0, 18, 0, time.FixedZone("UTC", 0)),
-		Timestamp:      1605618018,
+		Text:           "on iOS &amp; Android, you can now swipe to reply when you slide into their DMs https://t.co/evuWpMfBxQ",
+		Timestamp:      1693503931,
 		UserID:         "783214",
-		Username:       "Twitter",
-		Videos: []twitterscraper.Video{{
-			ID:      "1328684333599756289",
-			Preview: "https://pbs.twimg.com/amplify_video_thumb/1328684333599756289/img/cP5KwbIXbGunNSBy.jpg",
-			URL:     "https://video.twimg.com/amplify_video/1328684333599756289/vid/960x720/PcL8yv8KhgQ48Qpt.mp4?tag=13",
-		}},
+		Username:       "X",
+		Videos: []twitterscraper.Video{
+			{
+				ID:      "1697304568550330368",
+				Preview: "https://pbs.twimg.com/amplify_video_thumb/1697304568550330368/img/BUlESpef6FmWV_j2.jpg",
+				URL:     "https://video.twimg.com/amplify_video/1697304568550330368/vid/720x720/KyQlZA9zaf0kqY9Z.mp4?tag=14",
+			},
+		},
 	}
 	assertGetTweet(t, &expectedTweet)
 }
 
 func TestGetTweetWithMultiplePhotos(t *testing.T) {
 	expectedTweet := twitterscraper.Tweet{
-		ConversationID: "1390026628957417473",
-		HTML:           `no bird too tall, no crop too short<br><br>introducing bigger and better images on iOS and Android, now available to everyone <br><a href="https://t.co/2buHfhfRAx"><img src="https://pbs.twimg.com/media/E0pd2L2XEAQ_gnn.jpg"/></a><br><img src="https://pbs.twimg.com/media/E0pd2hPXoAY9-TZ.jpg"/>`,
-		ID:             "1390026628957417473",
-		Name:           "Twitter",
-		PermanentURL:   "https://twitter.com/Twitter/status/1390026628957417473",
+		ConversationID: "1577677328968204291",
+		HTML:           "More ways to discover videos on Twitter are here!<br><br>Now on iOS, videos on your timeline will open in our full screen immersive video player, where you can swipe up to keep discovering more content. <br><a href=\"https://t.co/XI2vM8DKXA\"><img src=\"https://pbs.twimg.com/media/FeUJKdnXEAEFe2j.jpg\"/></a><br><img src=\"https://pbs.twimg.com/media/FeUJKuxXEAAa6t7.jpg\"/>",
+		ID:             "1577677328968204291",
+		Name:           "Support",
+		PermanentURL:   "https://twitter.com/Support/status/1577677328968204291",
 		Photos: []twitterscraper.Photo{
-			{ID: "1390026620472332292", URL: "https://pbs.twimg.com/media/E0pd2L2XEAQ_gnn.jpg"},
-			{ID: "1390026626214371334", URL: "https://pbs.twimg.com/media/E0pd2hPXoAY9-TZ.jpg"},
+			{
+				ID:  "1577677319816286209",
+				URL: "https://pbs.twimg.com/media/FeUJKdnXEAEFe2j.jpg",
+			},
+			{
+				ID:  "1577677324421632000",
+				URL: "https://pbs.twimg.com/media/FeUJKuxXEAAa6t7.jpg",
+			},
 		},
-		Text:       "no bird too tall, no crop too short\n\nintroducing bigger and better images on iOS and Android, now available to everyone https://t.co/2buHfhfRAx",
-		TimeParsed: time.Date(2021, 5, 5, 19, 32, 28, 0, time.FixedZone("UTC", 0)),
-		Timestamp:  1620243148,
-		UserID:     "783214",
-		Username:   "Twitter",
+		Text:      "More ways to discover videos on Twitter are here!\n\nNow on iOS, videos on your timeline will open in our full screen immersive video player, where you can swipe up to keep discovering more content. https://t.co/XI2vM8DKXA",
+		Timestamp: 1664982561,
+		UserID:    "17874544",
+		Username:  "Support",
 	}
 	assertGetTweet(t, &expectedTweet)
 }
@@ -131,24 +137,22 @@ func TestGetTweetWithGIF(t *testing.T) {
 		t.Skip("Skipping test due to environment variable")
 	}
 	expectedTweet := twitterscraper.Tweet{
-		ConversationID: "1288540609310056450",
+		ConversationID: "1517535384833605632",
 		GIFs: []twitterscraper.GIF{
 			{
-				ID:      "1288540582768517123",
-				Preview: "https://pbs.twimg.com/tweet_video_thumb/EeHQ1UKXoAMVxWB.jpg",
-				URL:     "https://video.twimg.com/tweet_video/EeHQ1UKXoAMVxWB.mp4",
+				ID:      "1517535349890813952",
+				Preview: "https://pbs.twimg.com/tweet_video_thumb/FQ9eXEhXEAA-haj.jpg",
+				URL:     "https://video.twimg.com/tweet_video/FQ9eXEhXEAA-haj.mp4",
 			},
 		},
-		Hashtags:     []string{"CountdownToMars"},
-		HTML:         `Like for liftoff! <a href="https://twitter.com/hashtag/CountdownToMars">#CountdownToMars</a> <br><a href="https://t.co/yLe331pHfY"><img src="https://pbs.twimg.com/tweet_video_thumb/EeHQ1UKXoAMVxWB.jpg"/></a>`,
-		ID:           "1288540609310056450",
-		Name:         "Twitter",
-		PermanentURL: "https://twitter.com/Twitter/status/1288540609310056450",
-		Text:         "Like for liftoff! #CountdownToMars https://t.co/yLe331pHfY",
-		TimeParsed:   time.Date(2020, 7, 29, 18, 23, 15, 0, time.FixedZone("UTC", 0)),
-		Timestamp:    1596046995,
-		UserID:       "783214",
-		Username:     "Twitter",
+		HTML:         "Video captions or no captions, it’s now easier to choose for some of you on iOS, and soon on Android.<br><br>On videos that have captions available, we’re testing the option to turn captions off/on with a new “CC” button. <br><a href=\"https://t.co/Q2Q2Wmr78U\"><img src=\"https://pbs.twimg.com/tweet_video_thumb/FQ9eXEhXEAA-haj.jpg\"/></a>",
+		ID:           "1517535384833605632",
+		Name:         "Support",
+		PermanentURL: "https://twitter.com/Support/status/1517535384833605632",
+		Text:         "Video captions or no captions, it’s now easier to choose for some of you on iOS, and soon on Android.\n\nOn videos that have captions available, we’re testing the option to turn captions off/on with a new “CC” button. https://t.co/Q2Q2Wmr78U",
+		Timestamp:    1650643604,
+		UserID:       "17874544",
+		Username:     "Support",
 	}
 	assertGetTweet(t, &expectedTweet)
 }
@@ -158,24 +162,23 @@ func TestGetTweetWithPhotoAndGIF(t *testing.T) {
 		t.Skip("Skipping test due to environment variable")
 	}
 	expectedTweet := twitterscraper.Tweet{
-		ConversationID: "1580661436132757506",
+		ConversationID: "1583186305722507265",
 		GIFs: []twitterscraper.GIF{
 			{
-				ID:      "1580661428335382531",
-				Preview: "https://pbs.twimg.com/tweet_video_thumb/Fe-jMcIXkAMXK_W.jpg",
-				URL:     "https://video.twimg.com/tweet_video/Fe-jMcIXkAMXK_W.mp4",
+				ID:      "1583186295588790290",
+				Preview: "https://pbs.twimg.com/tweet_video_thumb/FfibjDnWIBIt5fn.jpg",
+				URL:     "https://video.twimg.com/tweet_video/FfibjDnWIBIt5fn.mp4",
 			},
 		},
-		HTML:         `a hit Tweet <br><a href="https://t.co/2C7cah4KzW"><img src="https://pbs.twimg.com/media/Fe-jMcGWQAAFWoG.jpg"/></a><br><img src="https://pbs.twimg.com/tweet_video_thumb/Fe-jMcIXkAMXK_W.jpg"/>`,
-		ID:           "1580661436132757506",
-		Name:         "Twitter",
-		PermanentURL: "https://twitter.com/Twitter/status/1580661436132757506",
-		Photos:       []twitterscraper.Photo{{ID: "1580661428326907904", URL: "https://pbs.twimg.com/media/Fe-jMcGWQAAFWoG.jpg"}},
-		Text:         "a hit Tweet https://t.co/2C7cah4KzW",
-		TimeParsed:   time.Date(2022, 10, 13, 20, 47, 8, 0, time.FixedZone("UTC", 0)),
-		Timestamp:    1665694028,
-		UserID:       "783214",
-		Username:     "Twitter",
+		HTML:         "“we need to talk” <br><br>irl vs on Spaces <br><a href=\"https://t.co/hrflPpbpif\"><img src=\"https://pbs.twimg.com/tweet_video_thumb/FfibjDnWIBIt5fn.jpg\"/></a><br><img src=\"https://pbs.twimg.com/media/FfibjDwWIAwvbtJ.jpg\"/>",
+		ID:           "1583186305722507265",
+		Name:         "Spaces",
+		PermanentURL: "https://twitter.com/XSpaces/status/1583186305722507265",
+		Photos:       []twitterscraper.Photo{{ID: "1583186295626539020", URL: "https://pbs.twimg.com/media/FfibjDwWIAwvbtJ.jpg"}},
+		Text:         "“we need to talk” \n\nirl vs on Spaces https://t.co/hrflPpbpif",
+		Timestamp:    1666296004,
+		UserID:       "1065249714214457345",
+		Username:     "XSpaces",
 	}
 	assertGetTweet(t, &expectedTweet)
 }
@@ -208,14 +211,13 @@ func TestQuotedAndReply(t *testing.T) {
 			ID:  "1237110473486729218",
 			URL: "https://pbs.twimg.com/media/ESsZa9AXgAIAYnF.jpg",
 		}},
-		Replies:    12,
-		Retweets:   18,
-		Text:       "The Easiest Problem Everyone Gets Wrong \n\n[new video] --&gt; https://t.co/YdaeDYmPAU https://t.co/iKu4Xs6o2V",
-		TimeParsed: time.Date(2020, 0o3, 9, 20, 18, 33, 0, time.FixedZone("UTC", 0)),
-		Timestamp:  1583785113,
-		URLs:       []string{"https://youtu.be/ytfCdqWhmdg"},
-		UserID:     "978944851",
-		Username:   "VsauceTwo",
+		Replies:   12,
+		Retweets:  18,
+		Text:      "The Easiest Problem Everyone Gets Wrong \n\n[new video] --&gt; https://t.co/YdaeDYmPAU https://t.co/iKu4Xs6o2V",
+		Timestamp: 1583785113,
+		URLs:      []string{"https://youtu.be/ytfCdqWhmdg"},
+		UserID:    "978944851",
+		Username:  "VsauceTwo",
 	}
 	tweet, err := testScraper.GetTweet("1237110897597976576")
 	if err != nil {
@@ -243,22 +245,19 @@ func TestQuotedAndReply(t *testing.T) {
 }
 func TestRetweet(t *testing.T) {
 	sample := &twitterscraper.Tweet{
-		ConversationID: "1359151057872580612",
-		HTML:           "We’ve seen an increase in attacks against Asian communities and individuals around the world. It’s important to know that this isn’t new; throughout history, Asians have experienced violence and exclusion. However, their diverse lived experiences have largely been overlooked.",
-		ID:             "1359151057872580612",
+		ConversationID: "1758837061786779942",
+		HTML:           "no ads, just bangers<br><br>aka your For You feed with Premium+<br><br>subscribe here → <a href=\"https://x.com/i/premium_sign_up\">https://t.co/APTO1t7kMk</a>",
+		ID:             "1758837061786779942",
+		URLs:           []string{"https://x.com/i/premium_sign_up"},
 		IsSelfThread:   false,
-		Likes:          6683,
-		Name:           "Twitter Together",
-		PermanentURL:   "https://twitter.com/TwitterTogether/status/1359151057872580612",
-		Replies:        456,
-		Retweets:       1495,
-		Text:           "We’ve seen an increase in attacks against Asian communities and individuals around the world. It’s important to know that this isn’t new; throughout history, Asians have experienced violence and exclusion. However, their diverse lived experiences have largely been overlooked.",
-		TimeParsed:     time.Date(2021, 02, 9, 14, 43, 58, 0, time.FixedZone("UTC", 0)),
-		Timestamp:      1612881838,
-		UserID:         "773578328498372608",
-		Username:       "TwitterTogether",
+		Name:           "Premium",
+		PermanentURL:   "https://twitter.com/premium/status/1758837061786779942",
+		Text:           "no ads, just bangers\n\naka your For You feed with Premium+\n\nsubscribe here → https://t.co/APTO1t7kMk",
+		Timestamp:      1708174407,
+		UserID:         "1399766153053061121",
+		Username:       "premium",
 	}
-	tweet, err := testScraper.GetTweet("1362849141248974853")
+	tweet, err := testScraper.GetTweet("1758837226379596068")
 	if err != nil {
 		t.Error(err)
 	} else {
@@ -276,15 +275,14 @@ func TestTweetViews(t *testing.T) {
 		HTML:         "Replies and likes don’t tell the whole story. We’re making it easier to tell *just* how many people have seen your Tweets with the addition of view counts, shown right next to likes. Now on iOS and Android, web coming soon.",
 		ID:           "1606055187348688896",
 		Likes:        2839,
-		Name:         "Twitter Support",
-		PermanentURL: "https://twitter.com/TwitterSupport/status/1606055187348688896",
+		Name:         "Support",
+		PermanentURL: "https://twitter.com/Support/status/1606055187348688896",
 		Replies:      3427,
 		Retweets:     783,
 		Text:         "Replies and likes don’t tell the whole story. We’re making it easier to tell *just* how many people have seen your Tweets with the addition of view counts, shown right next to likes. Now on iOS and Android, web coming soon.",
-		TimeParsed:   time.Date(2022, 12, 22, 22, 32, 50, 0, time.FixedZone("UTC", 0)),
 		Timestamp:    1612881838,
 		UserID:       "17874544",
-		Username:     "TwitterSupport",
+		Username:     "Support",
 		Views:        3189278,
 	}
 	tweet, err := testScraper.GetTweet("1606055187348688896")

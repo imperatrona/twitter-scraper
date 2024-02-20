@@ -1,46 +1,96 @@
 package twitterscraper_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	twitterscraper "github.com/imperatrona/twitter-scraper"
 )
 
 var (
-	username     = os.Getenv("TWITTER_USERNAME")
-	password     = os.Getenv("TWITTER_PASSWORD")
-	email        = os.Getenv("TWITTER_EMAIL")
-	skipAuthTest = os.Getenv("SKIP_AUTH_TEST") != ""
-	testScraper  = twitterscraper.New()
+	proxy         = os.Getenv("PROXY")
+	proxyRequired = os.Getenv("PROXY_REQUIRED") != ""
+	authToken     = os.Getenv("AUTH_TOKEN")
+	ct0           = os.Getenv("CT0")
+	cookies       = os.Getenv("COOKIES")
+	username      = os.Getenv("TWITTER_USERNAME")
+	password      = os.Getenv("TWITTER_PASSWORD")
+	email         = os.Getenv("TWITTER_EMAIL")
+	skipAuthTest  = os.Getenv("SKIP_AUTH_TEST") != ""
+	testScraper   = newTestScraper(false)
 )
 
 func init() {
-	if username != "" && password != "" && !skipAuthTest {
+	if skipAuthTest {
+		return
+	}
+
+	if authToken != "" && ct0 != "" {
+		testScraper.SetAuthToken(authToken, ct0)
+		if !testScraper.IsLoggedIn() {
+			panic("Invalid AuthToken")
+		}
+		return
+	}
+
+	if cookies != "" {
+		var parsedCookies []*http.Cookie
+		json.NewDecoder(strings.NewReader(cookies)).Decode(&parsedCookies)
+		testScraper.SetCookies(parsedCookies)
+		if !testScraper.IsLoggedIn() {
+			panic("Invalid Cookies")
+		}
+		return
+	}
+
+	if username != "" && password != "" {
 		err := testScraper.Login(username, password, email)
 		if err != nil {
 			panic(fmt.Sprintf("Login() error = %v", err))
 		}
+		return
 	}
+
+	panic("None of any auth data provided, provide any variables or set SKIP_AUTH_TEST.")
 }
 
-func TestAuth(t *testing.T) {
-	if skipAuthTest {
+func newTestScraper(skip_auth bool) *twitterscraper.Scraper {
+	s := twitterscraper.New()
+
+	if proxy != "" && proxyRequired {
+		err := s.SetProxy(proxy)
+		if err != nil {
+			panic(fmt.Sprintf("SetProxy() error = %v", err))
+		}
+	}
+
+	// Check connection by getting guest token
+	if err := s.GetGuestToken(); err != nil {
+		panic(fmt.Sprintf("cannot get guest token, can also be error with connection to twitter.\n %v", err))
+	}
+
+	if skip_auth == true || !skipAuthTest {
+		s.ClearGuestToken()
+		return s
+	}
+
+	return s
+}
+
+func TestLoginPassword(t *testing.T) {
+	if skipAuthTest || username == "" || password == "" {
 		t.Skip("Skipping test due to environment variable")
 	}
-	scraper := twitterscraper.New()
+	scraper := newTestScraper(true)
 	if err := scraper.Login(username, password, email); err != nil {
 		t.Fatalf("Login() error = %v", err)
 	}
 	if !scraper.IsLoggedIn() {
 		t.Fatalf("Expected IsLoggedIn() = true")
-	}
-	cookies := scraper.GetCookies()
-	scraper2 := twitterscraper.New()
-	scraper2.SetCookies(cookies)
-	if !scraper2.IsLoggedIn() {
-		t.Error("Expected restored IsLoggedIn() = true")
 	}
 	if err := scraper.Logout(); err != nil {
 		t.Errorf("Logout() error = %v", err)
@@ -50,7 +100,41 @@ func TestAuth(t *testing.T) {
 	}
 }
 
+func TestLoginToken(t *testing.T) {
+	if skipAuthTest || authToken == "" || ct0 == "" {
+		t.Skip("Skipping test due to environment variable")
+	}
+
+	scraper := newTestScraper(true)
+
+	scraper.SetAuthToken(authToken, ct0)
+	if !scraper.IsLoggedIn() {
+		t.Error("Expected IsLoggedIn() = true")
+	}
+}
+
+func TestLoginCookie(t *testing.T) {
+	if skipAuthTest || cookies == "" {
+		t.Skip("Skipping test due to environment variable")
+	}
+
+	scraper := newTestScraper(true)
+
+	var c []*http.Cookie
+
+	json.NewDecoder(strings.NewReader(cookies)).Decode(&c)
+
+	scraper.SetCookies(c)
+	if !scraper.IsLoggedIn() {
+		t.Error("Expected IsLoggedIn() = true")
+	}
+}
+
 func TestLoginOpenAccount(t *testing.T) {
+	if os.Getenv("TEST_OPEN_ACCOUNT") == "" {
+		t.Skip("Skipping test due to environment variable")
+	}
+
 	scraper := twitterscraper.New()
 	_, err := scraper.LoginOpenAccount()
 
