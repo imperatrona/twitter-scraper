@@ -2,10 +2,24 @@ package twitterscraper
 
 import (
 	"net/url"
+	"strings"
 )
 
+// FetchFollowing gets tweets with medias for a given user, via the Twitter frontend API.
+func (s *Scraper) FetchFollowing(user string, maxUsersNbr int, cursor string) ([]*Profile, string, error) {
+	userID, err := s.GetUserIDByScreenName(user)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return s.FetchFollowingByUserID(userID, maxUsersNbr, cursor)
+}
+
 // FetchFollowingByUserID gets following profiles list for a given userID, via the Twitter frontend GraphQL API.
-func (s *Scraper) FetchFollowingByUserID(userID string, cursor string) ([]*Profile, string, error) {
+func (s *Scraper) FetchFollowingByUserID(userID string, maxUsersNbr int, cursor string) ([]*Profile, string, error) {
+	if maxUsersNbr > 200 {
+		maxUsersNbr = 200
+	}
 
 	req, err := s.newRequest("GET", "https://twitter.com/i/api/graphql/oUxds-Fprv5NKsH67zPt5w/Following")
 	if err != nil {
@@ -15,6 +29,7 @@ func (s *Scraper) FetchFollowingByUserID(userID string, cursor string) ([]*Profi
 	variables := map[string]interface{}{
 		"userId":                 userID,
 		"includePromotedContent": false,
+		"count":                  maxUsersNbr,
 	}
 	features := map[string]interface{}{
 		"responsive_web_graphql_exclude_directive_enabled":                        true,
@@ -56,5 +71,10 @@ func (s *Scraper) FetchFollowingByUserID(userID string, cursor string) ([]*Profi
 	}
 
 	users, nextCursor := timeline.parseUsers()
+
+	if strings.HasPrefix(nextCursor, "0|") {
+		nextCursor = ""
+	}
+
 	return users, nextCursor, nil
 }
