@@ -170,6 +170,52 @@ type (
 		Verified             bool     `json:"verified"`
 	}
 
+	legacyUserV2 struct {
+		Following           bool   `json:"following"`
+		CanDm               bool   `json:"can_dm"`
+		CanMediaTag         bool   `json:"can_media_tag"`
+		CreatedAt           string `json:"created_at"`
+		DefaultProfile      bool   `json:"default_profile"`
+		DefaultProfileImage bool   `json:"default_profile_image"`
+		Description         string `json:"description"`
+		Entities            struct {
+			Description struct {
+				Urls []interface{} `json:"urls"`
+			} `json:"description"`
+			URL struct {
+				Urls []struct {
+					DisplayURL  string `json:"display_url"`
+					ExpandedURL string `json:"expanded_url"`
+					URL         string `json:"url"`
+					Indices     []int  `json:"indices"`
+				} `json:"urls"`
+			} `json:"url"`
+		} `json:"entities"`
+		FastFollowersCount      int           `json:"fast_followers_count"`
+		FavouritesCount         int           `json:"favourites_count"`
+		FollowersCount          int           `json:"followers_count"`
+		FriendsCount            int           `json:"friends_count"`
+		HasCustomTimelines      bool          `json:"has_custom_timelines"`
+		IsTranslator            bool          `json:"is_translator"`
+		ListedCount             int           `json:"listed_count"`
+		Location                string        `json:"location"`
+		MediaCount              int           `json:"media_count"`
+		Name                    string        `json:"name"`
+		NormalFollowersCount    int           `json:"normal_followers_count"`
+		PinnedTweetIdsStr       []string      `json:"pinned_tweet_ids_str"`
+		PossiblySensitive       bool          `json:"possibly_sensitive"`
+		ProfileBannerURL        string        `json:"profile_banner_url"`
+		ProfileImageURLHTTPS    string        `json:"profile_image_url_https"`
+		ProfileInterstitialType string        `json:"profile_interstitial_type"`
+		ScreenName              string        `json:"screen_name"`
+		StatusesCount           int           `json:"statuses_count"`
+		TranslatorType          string        `json:"translator_type"`
+		URL                     string        `json:"url"`
+		Verified                bool          `json:"verified"`
+		WantRetweets            bool          `json:"want_retweets"`
+		WithheldInCountries     []interface{} `json:"withheld_in_countries"`
+	}
+
 	Place struct {
 		ID          string `json:"id"`
 		PlaceType   string `json:"place_type"`

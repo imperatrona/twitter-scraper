@@ -47,6 +47,21 @@ func (result *result) parse() *Tweet {
 	return tw
 }
 
+type userResult struct {
+	Typename                   string       `json:"__typename"`
+	ID                         string       `json:"id"`
+	RestID                     string       `json:"rest_id"`
+	AffiliatesHighlightedLabel struct{}     `json:"affiliates_highlighted_label"`
+	HasGraduatedAccess         bool         `json:"has_graduated_access"`
+	IsBlueVerified             bool         `json:"is_blue_verified"`
+	ProfileImageShape          string       `json:"profile_image_shape"`
+	Legacy                     legacyUserV2 `json:"legacy"`
+}
+
+func (result *userResult) parse() Profile {
+	return parseProfileV2(*result)
+}
+
 type item struct {
 	Item struct {
 		ItemContent struct {
@@ -70,10 +85,7 @@ type entry struct {
 			} `json:"tweet_results"`
 			UserDisplayType string `json:"userDisplayType"`
 			UserResults     struct {
-				Result struct {
-					RestID string     `json:"rest_id"`
-					Legacy legacyUser `json:"legacy"`
-				} `json:"result"`
+				Result userResult `json:"result"`
 			} `json:"user_results"`
 		} `json:"itemContent"`
 	} `json:"content"`
@@ -94,6 +106,16 @@ type timelineV2 struct {
 						} `json:"instructions"`
 					} `json:"timeline"`
 				} `json:"timeline_v2"`
+
+				Timeline struct {
+					Timeline struct {
+						Instructions []struct {
+							Entries []entry `json:"entries"`
+							Entry   entry   `json:"entry"`
+							Type    string  `json:"type"`
+						} `json:"instructions"`
+					} `json:"timeline"`
+				} `json:"timeline"`
 			} `json:"result"`
 		} `json:"user"`
 	} `json:"data"`
@@ -164,6 +186,24 @@ func (timeline *bookmarksTimelineV2) parseTweets() ([]*Tweet, string) {
 		}
 	}
 	return tweets, cursor
+}
+
+func (timeline *timelineV2) parseUsers() ([]*Profile, string) {
+	var cursor string
+	var users []*Profile
+	for _, instruction := range timeline.Data.User.Result.Timeline.Timeline.Instructions {
+		for _, entry := range instruction.Entries {
+			if entry.Content.CursorType == "Bottom" {
+				cursor = entry.Content.Value
+				continue
+			}
+			if entry.Content.ItemContent.UserResults.Result.Typename == "User" {
+				user := entry.Content.ItemContent.UserResults.Result.parse()
+				users = append(users, &user)
+			}
+		}
+	}
+	return users, cursor
 }
 
 type threadedConversation struct {
