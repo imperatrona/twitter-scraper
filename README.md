@@ -23,6 +23,7 @@ You can use this library to get tweets, profiles, and trends trivially.
   - [Get tweet](#get-tweet)
   - [Get user tweets](#get-user-tweets)
   - [Get user medias](#get-user-medias)
+  - [Get bookmarks](#get-bookmarks)
   - [Search tweets](#search-tweets)
   - [Search params](#search-params)
   - [Get profile](#get-profile)
@@ -233,7 +234,30 @@ var cursor string
 tweets, cursor, err := scraper.FetchMediaTweets("taylorswift13", 20, cursor)
 ```
 
-<!-- ### Get bookmarks -->
+### Get bookmarks
+
+> [!IMPORTANT]  
+> Requires authentication!
+
+500 requests / 15 minutes
+
+`GetBookmarks` returns a channel with the specified number of bookmarked tweets. It’s using the `FetchBookmarks` method under the hood.
+
+```golang
+for tweet := range scraper.GetBookmarks(context.Background(), 50) {
+    if tweet.Error != nil {
+        panic(tweet.Error)
+    }
+    fmt.Println(tweet.Text)
+}
+```
+
+`FetchBookmarks` returns bookmarked tweets and cursor for fetching the next page. Each request returns up to 20 tweets.
+
+```golang
+var cursor string
+tweets, cursor, err := scraper.FetchBookmarks(20, cursor)
+```
 
 ### Search tweets
 

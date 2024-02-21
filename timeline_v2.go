@@ -134,6 +134,38 @@ func (timeline *timelineV2) parseTweets() ([]*Tweet, string) {
 	return tweets, cursor
 }
 
+type bookmarksTimelineV2 struct {
+	Data struct {
+		Bookmarks struct {
+			Timeline struct {
+				Instructions []struct {
+					Entries []entry `json:"entries"`
+					Type    string  `json:"type"`
+				} `json:"instructions"`
+			} `json:"timeline"`
+		} `json:"bookmark_timeline_v2"`
+	} `json:"data"`
+}
+
+func (timeline *bookmarksTimelineV2) parseTweets() ([]*Tweet, string) {
+	var cursor string
+	var tweets []*Tweet
+	for _, instruction := range timeline.Data.Bookmarks.Timeline.Instructions {
+		for _, entry := range instruction.Entries {
+			if entry.Content.CursorType == "Bottom" {
+				cursor = entry.Content.Value
+				continue
+			}
+			if entry.Content.ItemContent.TweetResults.Result.Typename == "Tweet" {
+				if tweet := entry.Content.ItemContent.TweetResults.Result.parse(); tweet != nil {
+					tweets = append(tweets, tweet)
+				}
+			}
+		}
+	}
+	return tweets, cursor
+}
+
 type threadedConversation struct {
 	Data struct {
 		ThreadedConversationWithInjectionsV2 struct {
