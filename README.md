@@ -29,6 +29,8 @@ You can use this library to get tweets, profiles, and trends trivially.
   - [Get profile](#get-profile)
   - [Search profile](#search-profile)
   - [Get trends](#get-trends)
+  - [Get following](#get-following)
+  - [Get followers](#get-followers)
 - [Connection](#connection)
   - [Proxy](#proxy)
   - [HTTP(s)](#https)
@@ -330,6 +332,30 @@ profiles, cursor, err := scraper.FetchSearchProfiles("taylorswift13", 20, cursor
 
 ```golang
 trends, err := scraper.GetTrends()
+```
+
+### Get following
+
+> [!IMPORTANT]  
+> Requires authentication!
+
+500 requests / 15 minutes
+
+```golang
+var cursor string
+users, cursor, err := testScraper.FetchFollowing("Support", 20, cursor)
+```
+
+### Get followers
+
+> [!IMPORTANT]  
+> Requires authentication!
+
+50 requests / 15 minutes
+
+```golang
+var cursor string
+users, cursor, err := testScraper.FetchFollowers("Support", 20, cursor)
 ```
 
 ## Connection
