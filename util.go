@@ -352,6 +352,8 @@ func parseProfile(user legacyUser) Profile {
 		URL:            "https://twitter.com/" + user.ScreenName,
 		UserID:         user.IDStr,
 		Username:       user.ScreenName,
+		FollowedBy:     user.FollowedBy,
+		Following:      user.Following,
 	}
 
 	tm, err := time.Parse(time.RubyDate, user.CreatedAt)

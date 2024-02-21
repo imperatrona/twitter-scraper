@@ -168,6 +168,8 @@ type (
 		ScreenName           string   `json:"screen_name"`
 		StatusesCount        int      `json:"statuses_count"`
 		Verified             bool     `json:"verified"`
+		FollowedBy           bool     `json:"followed_by"`
+		Following            bool     `json:"following"`
 	}
 
 	legacyUserV2 struct {
