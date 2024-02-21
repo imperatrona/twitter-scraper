@@ -2,11 +2,42 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/imperatrona/twitter-scraper.svg)](https://pkg.go.dev/github.com/imperatrona/twitter-scraper)
 
-Twitter's API is annoying to work with, and has lots of limitations —
-luckily their frontend (JavaScript) has it's own API, which I reverse-engineered.
-No API rate limits. No tokens needed. No restrictions. Extremely fast.
+Twitter’s API is pricey and has lots of limitations. But their frontend has its own API, which was reverse-engineered by [@n0madic](https://github.com/n0madic) and maintained by [@imperatrona](https://github.com/imperatrona). Some endpoints require authentication, but it is easy to scale by buying new accounts and proxies.
 
-You can use this library to get the text of any user's Tweets trivially.
+You can use this library to get tweets, profiles, and trends trivially.
+
+<details>
+<summary><h2>Table of Contents</h2></summary>
+
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Rate limits](#rate-limits)
+- [Authentication](#authentication)
+  - [Using cookies](#using-cookies)
+  - [Using AuthToken](#using-authtoken)
+  - [OpenAccount](#openaccount)
+  - [Login & Password](#login--password)
+  - [Check if login](#check-if-login)
+  - [Log out](#log-out)
+- [Methods](#methods)
+  - [Get tweet](#get-tweet)
+  - [Get user tweets](#get-user-tweets)
+  - [Get user medias](#get-user-medias)
+  - [Search tweets](#search-tweets)
+  - [Search params](#search-params)
+  - [Get profile](#get-profile)
+  - [Search profile](#search-profile)
+  - [Get trends](#get-trends)
+- [Connection](#connection)
+  - [Proxy](#proxy)
+  - [HTTP(s)](#https)
+  - [SOCKS5](#socks5)
+  - [Delay](#delay)
+  - [Load timeline with tweet replies](#load-timeline-with-tweet-replies)
+- [Contributing](#contributing)
+  - [Testing](#testing)
+
+</details>
 
 ## Installation
 
@@ -14,78 +45,98 @@ You can use this library to get the text of any user's Tweets trivially.
 go get -u github.com/imperatrona/twitter-scraper
 ```
 
-## Usage
-
-### Authentication
-
-Now all methods require authentication!
-
-#### Login
+## Quick start
 
 ```golang
-err := scraper.Login("username", "password")
+package main
+
+import (
+    "context"
+    "fmt"
+    twitterscraper "github.com/imperatrona/twitter-scraper"
+)
+
+func main() {
+    authToken := "auth_token"
+    ct0 := "ct0"
+
+    scraper := twitterscraper.New()
+    scraper.SetAuthToken(authToken, ct0)
+
+    // After setting Cookies or AuthToken you have to execute IsLoggedIn method.
+    // Without it, scraper wouldn't be able to make requests that requires authentication
+    if !scraper.IsLoggedIn() {
+      panic("Invalid AuthToken")
+    }
+
+    for tweet := range scraper.GetTweets(context.Background(), "x", 50) {
+        if tweet.Error != nil {
+            panic(tweet.Error)
+        }
+        fmt.Println(tweet.Text)
+    }
+}
 ```
 
-Use username to login, not email!
-But if you have email confirmation, use email address in addition:
+## Rate limits
+
+Api has a global limit on how many requests per second are allowed, don’t make requests more than once per 1.5 seconds from one account. Also each endpoint has its own limits, most of them are 150 requests per 15 minutes.
+
+Apparently twitter doesn’t limit the number of accounts that can be used per one IP address. This could change at any time. As of February 2024, I have been managing 20 accounts per IP address without receiving a ban for several months.
+
+OpenAccount was great in the past, but now it’s nerfed by twitter. They allow 180 requests instead of 150, but you can only create one account per month with one IP address. If you use OpenAccount you should save your credentials and use them later with `WithOpenAccount` method.
+
+## Authentication
+
+Most endpoints require authentication. The preferable way is to use SetCookies. You can also use `SetAuthToken` but `POST` endpoints will not work. Login with password may require confirmation with email and is often the reason of accounts ban.
+
+Endpoints that work without authentication will not return sensitive content. To get sensitive content you need to authenticate with any available method including `OpenAccount`.
+
+### Using cookies
 
 ```golang
-err := scraper.Login("username", "password", "email")
+// Deserialize from JSON
+var cookies []*http.Cookie
+f, _ := os.Open("cookies.json")
+json.NewDecoder(f).Decode(&cookies)
+
+scraper.SetCookies(cookies)
+if !scraper.IsLoggedIn() {
+    panic("Invalid cookies")
+}
 ```
 
-If you have two-factor authentication, use code:
-
-```golang
-err := scraper.Login("username", "password", "code")
-```
-
-Status of login can be checked with:
-
-```golang
-scraper.IsLoggedIn()
-```
-
-Logout (clear session):
-
-```golang
-scraper.Logout()
-```
-
-If you want save session between restarts, you can save cookies with `scraper.GetCookies()` and restore with `scraper.SetCookies()`.
-
-For example, save cookies:
+To save cookies from an authorized client to a file, use `GetCookies`:
 
 ```golang
 cookies := scraper.GetCookies()
-// serialize to JSON
-js, _ := json.Marshal(cookies)
-// save to file
+
+data, _ := json.Marshal(cookies)
 f, _ = os.Create("cookies.json")
-f.Write(js)
+f.Write(data)
 ```
 
-and load cookies:
+### Using AuthToken
 
 ```golang
-f, _ := os.Open("cookies.json")
-// deserialize from JSON
-var cookies []*http.Cookie
-json.NewDecoder(f).Decode(&cookies)
-// load cookies
-scraper.SetCookies(cookies)
-// check login status
-scraper.IsLoggedIn()
+scraper.SetAuthToken(authToken, ct0)
+if !scraper.IsLoggedIn() {
+    panic("Invalid AuthToken")
+}
 ```
 
-#### Open account
+### OpenAccount
 
-If you don't want to use your account, you can try login as a Twitter app:
+> [!WARNING]  
+> Deprecated. Nerfed by twitter, doesn't support new endpoints.
+
+`LoginOpenAccount` is now limited to one new account per month for IP address.
 
 ```golang
 account, err := scraper.LoginOpenAccount()
 ```
 
-You can manually set a specific user account:
+You should save `OpenAccount` returned by `LoginOpenAccount` to reuse it later.
 
 ```golang
 scraper.WithOpenAccount(twitterscraper.OpenAccount{
@@ -94,224 +145,192 @@ scraper.WithOpenAccount(twitterscraper.OpenAccount{
 })
 ```
 
+### Login & Password
+
+To log in, you have to use your username, not the email!
+
+```golang
+err := scraper.Login("username", "password")
+```
+
+If you have email confirmation, use your email address in addition:
+
+```golang
+err := scraper.Login("username", "password", "email")
+```
+
+If you have two-factor authentication, use the code:
+
+```golang
+err := scraper.Login("username", "password", "code")
+```
+
+### Check if login
+
+Status of login can be checked with method `IsLoggedIn`:
+
+```golang
+scraper.IsLoggedIn()
+```
+
+### Log out
+
+```golang
+scraper.Logout()
+```
+
+## Methods
+
+### Get tweet
+
+150 requests / 15 minutes
+
+```golang
+tweet, err := scraper.GetTweet("1328684389388185600")
+```
+
 ### Get user tweets
 
-```golang
-package main
+150 requests / 15 minutes
 
-import (
-    "context"
-    "fmt"
-    twitterscraper "github.com/imperatrona/twitter-scraper"
-)
-
-func main() {
-    scraper := twitterscraper.New()
-    account, err := scraper.LoginOpenAccount()
-    if err != nil {
-        panic(err)
-    }
-    for tweet := range scraper.GetTweets(context.Background(), "Twitter", 50) {
-        if tweet.Error != nil {
-            panic(tweet.Error)
-        }
-        fmt.Println(tweet.Text)
-    }
-}
-```
-
-It appears you can ask for up to 50 tweets.
-
-### Get user medias
+`GetTweets` returns a channel with the specified number of user tweets. It’s using the `FetchTweets` method under the hood.
 
 ```golang
-package main
-
-import (
-    "context"
-    "fmt"
-    twitterscraper "github.com/imperatrona/twitter-scraper"
-)
-
-func main() {
-    scraper := twitterscraper.New()
-    account, err := scraper.LoginOpenAccount()
-    if err != nil {
-        panic(err)
-    }
-    for tweet := range scraper.GetMediaTweets(context.Background(), "Twitter", 50) {
-        if tweet.Error != nil {
-            panic(tweet.Error)
-        }
-        fmt.Println(tweet.Text)
-    }
-}
-```
-
-### Get single tweet
-
-```golang
-package main
-
-import (
-    "fmt"
-
-    twitterscraper "github.com/imperatrona/twitter-scraper"
-)
-
-func main() {
-    scraper := twitterscraper.New()
-    err := scraper.Login(username, password)
-    if err != nil {
-        panic(err)
-    }
-    tweet, err := scraper.GetTweet("1328684389388185600")
-    if err != nil {
-        panic(err)
+for tweet := range scraper.GetTweets(context.Background(), "taylorswift13", 50) {
+    if tweet.Error != nil {
+        panic(tweet.Error)
     }
     fmt.Println(tweet.Text)
 }
 ```
 
-### Search tweets by query standard operators
-
-Now the search only works for authenticated users!
-
-Tweets containing “twitter” and “scraper” and “data“, filtering out retweets:
+FetchTweets returns tweets and cursor for fetching the next page. Each request returns up to 20 tweets.
 
 ```golang
-package main
+var cursor string
+tweets, cursor, err := scraper.FetchTweets("taylorswift13", 20, cursor)
+```
 
-import (
-    "context"
-    "fmt"
-    twitterscraper "github.com/imperatrona/twitter-scraper"
-)
+### Get user medias
 
-func main() {
-    scraper := twitterscraper.New()
-    err := scraper.Login(username, password)
-    if err != nil {
-        panic(err)
+500 requests / 15 minutes
+
+`GetMediaTweets` returns a channel with the specified number of user tweets that contain media. It’s using the `FetchMediaTweets` method under the hood.
+
+```golang
+for tweet := range scraper.GetMediaTweets(context.Background(), "taylorswift13", 50) {
+    if tweet.Error != nil {
+        panic(tweet.Error)
     }
-    for tweet := range scraper.SearchTweets(context.Background(),
-        "twitter scraper data -filter:retweets", 50) {
-        if tweet.Error != nil {
-            panic(tweet.Error)
-        }
-        fmt.Println(tweet.Text)
-    }
+    fmt.Println(tweet.Text)
 }
 ```
 
-The search ends if we have 50 tweets.
+`FetchMediaTweets` returns tweets and cursor for fetching the next page. Each request returns up to 20 tweets.
 
-See [Rules and filtering](https://developer.twitter.com/en/docs/tweets/rules-and-filtering/overview/standard-operators) for build standard queries.
+```golang
+var cursor string
+tweets, cursor, err := scraper.FetchMediaTweets("taylorswift13", 20, cursor)
+```
 
-#### Set search mode
+<!-- ### Get bookmarks -->
+
+### Search tweets
+
+> [!IMPORTANT]  
+> Requires authentication!
+
+150 requests / 15 minutes
+
+`SearchTweets` returns a channel with the specified number of tweets that contain media. It’s using the `FetchSearchTweets` method under the hood.
+
+```golang
+for tweet := range scraper.SearchTweets(context.Background(),
+    "twitter scraper data -filter:retweets", 50) {
+    if tweet.Error != nil {
+        panic(tweet.Error)
+    }
+    fmt.Println(tweet.Text)
+}
+```
+
+`FetchSearchTweets` returns tweets and cursor for fetching the next page. Each request returns up to 20 tweets.
+
+```golang
+tweets, cursor, err := scraper.FetchSearchTweets("taylorswift13", 20, cursor)
+```
+
+By default, search returns top tweets. You can change it by specifying the search mode before making requests. Supported modes are `SearchTop`, `SearchLatest`, `SearchPhotos`, `SearchVideos`, and `SearchUsers`.
 
 ```golang
 scraper.SetSearchMode(twitterscraper.SearchLatest)
 ```
 
-Options:
+#### Search params
 
-- `twitterscraper.SearchTop` - default mode
-- `twitterscraper.SearchLatest` - live mode
-- `twitterscraper.SearchPhotos` - image mode
-- `twitterscraper.SearchVideos` - video mode
-- `twitterscraper.SearchUsers` - user mode
+See [Rules and filtering](https://developer.twitter.com/en/docs/tweets/rules-and-filtering/overview/standard-operators) for build standard queries.
 
 ### Get profile
 
+95 requests / 15 minutes
+
 ```golang
-package main
+profile, err := scraper.GetProfile("taylorswift13")
+```
 
-import (
-    "fmt"
-    twitterscraper "github.com/imperatrona/twitter-scraper"
-)
+### Search profile
 
-func main() {
-    scraper := twitterscraper.New()
-    scraper.LoginOpenAccount()
-    profile, err := scraper.GetProfile("Twitter")
-    if err != nil {
-        panic(err)
+> [!IMPORTANT]  
+> Requires authentication!
+
+150 requests / 15 minutes
+
+`SearchProfiles` returns a channel with the specified number of tweets that contain media. It’s using the `FetchSearchProfiles` method under the hood.
+
+```golang
+for profile := range scraper.SearchProfiles(context.Background(), "Twitter", 50) {
+    if profile.Error != nil {
+        panic(profile.Error)
     }
-    fmt.Printf("%+v\n", profile)
+    fmt.Println(profile.Name)
 }
 ```
 
-### Search profiles by query
+`FetchSearchProfiles` returns profiles and cursor for fetching the next page. Each request returns up to 20 tweets.
 
 ```golang
-package main
-
-import (
-    "context"
-    "fmt"
-    twitterscraper "github.com/imperatrona/twitter-scraper"
-)
-
-func main() {
-    scraper := twitterscraper.New().SetSearchMode(twitterscraper.SearchUsers)
-    err := scraper.Login(username, password)
-    if err != nil {
-        panic(err)
-    }
-    for profile := range scraper.SearchProfiles(context.Background(), "Twitter", 50) {
-        if profile.Error != nil {
-            panic(profile.Error)
-        }
-        fmt.Println(profile.Name)
-    }
-}
+profiles, cursor, err := scraper.FetchSearchProfiles("taylorswift13", 20, cursor)
 ```
 
 ### Get trends
 
 ```golang
-package main
-
-import (
-    "fmt"
-    twitterscraper "github.com/imperatrona/twitter-scraper"
-)
-
-func main() {
-    scraper := twitterscraper.New()
-    trends, err := scraper.GetTrends()
-    if err != nil {
-        panic(err)
-    }
-    fmt.Println(trends)
-}
+trends, err := scraper.GetTrends()
 ```
 
-### Use Proxy
+## Connection
 
-Support HTTP(s) and SOCKS5 proxy
+### Proxy
 
-#### with HTTP
+#### HTTP(s)
 
 ```golang
 err := scraper.SetProxy("http://localhost:3128")
-if err != nil {
-    panic(err)
-}
 ```
 
-#### with SOCKS5
+#### SOCKS5
 
 ```golang
 err := scraper.SetProxy("socks5://localhost:1080")
-if err != nil {
-    panic(err)
-}
 ```
 
-### Delay requests
+Socks5 proxy support authentication.
+
+```golang
+err := scraper.SetProxy("socks5://user:pass@localhost:1080")
+```
+
+### Delay
 
 Add delay between API requests (in seconds)
 
@@ -324,3 +343,9 @@ scraper.WithDelay(5)
 ```golang
 scraper.WithReplies(true)
 ```
+
+## Contributing
+
+### Testing
+
+To run some tests, you need to set any form of authentication via environment variables. You can see all possible variables in .vscode/settings.json file. You can also set them in the file to use automatically in vscode, just make sure you don’t commit them in your contribution.
