@@ -387,6 +387,8 @@ func parseProfileV2(user userResult) Profile {
 		UserID:         user.ID,
 		Username:       u.ScreenName,
 		Sensitive:      u.PossiblySensitive,
+		Following:      u.Following,
+		FollowedBy:     u.FollowedBy,
 	}
 
 	tm, err := time.Parse(time.RubyDate, u.CreatedAt)

@@ -34,6 +34,8 @@ type Profile struct {
 	Username       string
 	Website        string
 	Sensitive      bool
+	Following      bool
+	FollowedBy     bool
 }
 
 type user struct {

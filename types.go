@@ -171,6 +171,7 @@ type (
 	}
 
 	legacyUserV2 struct {
+		FollowedBy          bool   `json:"followed_by"`
 		Following           bool   `json:"following"`
 		CanDm               bool   `json:"can_dm"`
 		CanMediaTag         bool   `json:"can_media_tag"`
