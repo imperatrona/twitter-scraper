@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	twitterscraper "github.com/imperatrona/twitter-scraper"
+	twitterscraper "github.com/mistadikay/twitter-scraper"
 )
 
 func TestFetchSearchCursor(t *testing.T) {
