@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	twitterscraper "github.com/imperatrona/twitter-scraper"
+	twitterscraper "github.com/mistadikay/twitter-scraper"
 )
 
 var (

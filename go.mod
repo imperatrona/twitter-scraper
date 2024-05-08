@@ -1,4 +1,4 @@
-module github.com/imperatrona/twitter-scraper
+module github.com/mistadikay/twitter-scraper
 
 go 1.16
 

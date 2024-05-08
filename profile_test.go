@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	twitterscraper "github.com/imperatrona/twitter-scraper"
+	twitterscraper "github.com/mistadikay/twitter-scraper"
 )
 
 func TestGetProfile(t *testing.T) {
