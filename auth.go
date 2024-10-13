@@ -165,7 +165,7 @@ func (s *Scraper) IsLoggedIn() bool {
 
 // randomDelay introduces a random delay between 1 and 3 seconds
 func randomDelay() {
-	delay := time.Duration(3000+rand.Intn(5000)) * time.Millisecond
+	delay := time.Duration(1000+rand.Intn(2000)) * time.Millisecond
 	time.Sleep(delay)
 }
 
@@ -506,4 +506,197 @@ func (s *Scraper) sign(method string, ref *url.URL) string {
 	}
 
 	return "OAuth " + b.String()
+}
+
+
+
+func (s *Scraper) AutoLogin(credentials... string ) error {
+	var username, password, email, confirmation string
+	if len(credentials) < 2 || len(credentials) > 4 {
+		return fmt.Errorf("invalid credentials")
+	}
+
+	username, password = credentials[0], credentials[1]
+	email = credentials[2]
+	if len(credentials) == 4 {
+		confirmation = credentials[3]
+	}
+	s.setBearerToken(bearerToken2)
+
+	err := s.GetGuestToken()
+	if err != nil {
+		return err
+	}
+
+	// Initialize login flow
+	flowToken, next, err := s.initializeLoginFlow()
+	if err != nil {
+		fmt.Println("initializeLoginFlow", err)
+		return err
+	}
+	var nextData map[string]interface{}
+	var stop = false
+
+	for next != "" && !stop {
+		switch next {
+		case "LoginJsInstrumentationSubtask":
+			nextData = s.handleJsInstrumentation(flowToken)
+		case "LoginEnterUserIdentifierSSO":
+			nextData = s.handleEnterUserIdentifier(flowToken, username)
+		case "LoginEnterPassword":
+			nextData = s.handleEnterPassword(flowToken, password)
+		case "LoginTwoFactorAuthChallenge":
+			code := confirmation
+			nextData = s.handleTwoFactorAuth(flowToken, code)
+		case "AccountDuplicationCheck":
+			nextData = s.handleAccountDuplicationCheck(flowToken)
+		case "LoginEnterAlternateIdentifierSubtask":
+			nextData = s.handleLoginEnterAlternateIdentifier(flowToken, email)
+		case "LoginAcid":
+			nextData = s.handleLoginAcid(flowToken, confirmation)
+		case "LoginSuccessSubtask":
+			s.isLogged = true
+			stop = true
+			continue
+		default:
+			return fmt.Errorf("unknown subtask: %s", next)
+		}
+		fmt.Printf("current flow is %s\n", next)
+		flowToken, next, err = s.doFlow(nextData)
+
+		randomDelay() // Add a delay between requests
+	}
+	s.isOpenAccount = false
+	return err
+}
+
+func (s *Scraper) doFlow(data map[string]interface{}) (nextToken string, nextTask string, err error) {
+	info, err := s.getFlow(data)
+	if err != nil {
+		return "", "", err
+	}
+	if len(info.Errors) > 0 {
+		return "", "", fmt.Errorf("auth error (%d): %v", info.Errors[0].Code, info.Errors[0].Message)
+	}
+	next := ""
+
+	if len(info.Subtasks) > 0 {
+		if info.Subtasks[0].SubtaskID == "LoginAcid" {
+			err = fmt.Errorf("auth error: %v", "LoginAcid")
+		} else if info.Subtasks[0].SubtaskID == "DenyLoginSubtask" {
+			err = fmt.Errorf("auth error: %v", "DenyLoginSubtask")
+		} else {
+			next = info.Subtasks[0].SubtaskID
+		}
+	}
+
+	return info.FlowToken, next, err
+}
+
+func (s *Scraper) initializeLoginFlow() (string, string, error) {
+	data := map[string]interface{}{
+		"flow_name": "login",
+		"input_flow_data": map[string]interface{}{
+			"flow_context": map[string]interface{}{
+				"debug_overrides": map[string]interface{}{},
+				"start_location":  map[string]interface{}{"location": "splash_screen"},
+			},
+		},
+	}
+	return s.doFlow(data)
+}
+
+func (s *Scraper) handleJsInstrumentation(flowToken string) map[string]interface{} {
+	return map[string]interface{}{
+		"flow_token": flowToken,
+		"subtask_inputs": []map[string]interface{}{
+			{
+				"subtask_id":         "LoginJsInstrumentationSubtask",
+				"js_instrumentation": map[string]interface{}{"response": "{}", "link": "next_link"},
+			},
+		},
+	}
+}
+
+func (s *Scraper) handleEnterUserIdentifier(flowToken, username string) map[string]interface{} {
+	return map[string]interface{}{
+		"flow_token": flowToken,
+		"subtask_inputs": []map[string]interface{}{
+			{
+				"subtask_id": "LoginEnterUserIdentifierSSO",
+				"settings_list": map[string]interface{}{
+					"setting_responses": []map[string]interface{}{
+						{
+							"key":           "user_identifier",
+							"response_data": map[string]interface{}{"text_data": map[string]interface{}{"result": username}},
+						},
+					},
+					"link": "next_link",
+				},
+			},
+		},
+	}
+}
+// identifier maybe email/screen_name/phone_number.
+func (s *Scraper) handleLoginEnterAlternateIdentifier(flowToken, identifier string) map[string]interface{}{
+	return map[string]interface{}{
+		"flow_token": flowToken,
+		"subtask_inputs": []map[string]interface{}{
+			{
+				"subtask_id":     "LoginEnterAlternateIdentifierSubtask",
+				"enter_text": map[string]interface{}{"text": identifier, "link": "next_link"},
+			},
+		},
+	}
+}
+
+func (s *Scraper) handleEnterPassword(flowToken, password string) map[string]interface{} {
+	return map[string]interface{}{
+		"flow_token": flowToken,
+		"subtask_inputs": []map[string]interface{}{
+			{
+				"subtask_id":     "LoginEnterPassword",
+				"enter_password": map[string]interface{}{"password": password, "link": "next_link"},
+			},
+		},
+	}
+}
+
+func (s *Scraper) handleTwoFactorAuth(flowToken, code string) map[string]interface{} {
+	return map[string]interface{}{
+		"flow_token": flowToken,
+		"subtask_inputs": []map[string]interface{}{
+			{
+				"subtask_id": "LoginTwoFactorAuthChallenge",
+				"enter_text": map[string]interface{}{"text": code, "link": "next_link"},
+			},
+		},
+	}
+}
+
+
+func (s *Scraper) handleLoginAcid(flowToken, confirmation string) map[string]interface{} {
+	return map[string]interface{}{
+		"flow_token": flowToken,
+		"subtask_inputs": []map[string]interface{}{
+			{
+				"subtask_id": "LoginAcid",
+				"enter_text": map[string]interface{}{"text": confirmation, "link": "next_link"},
+			},
+		},
+	}
+}
+
+func (s *Scraper) handleAccountDuplicationCheck(flowToken string) map[string]interface{} {
+	return map[string]interface{}{
+		"flow_token": flowToken,
+		"subtask_inputs": []map[string]interface{}{
+			{
+				"subtask_id":     "AccountDuplicationCheck",
+				"check_logged_in_account": map[string]interface{}{
+					"link": "AccountDuplicationCheck_false",
+				},
+			},
+		},
+	}
 }
