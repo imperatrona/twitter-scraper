@@ -10,6 +10,14 @@ type (
 		Name     string
 	}
 
+	// Url represents a URL with display, expanded, and index data.
+	Url struct {
+		DisplayURL  string `json:"display_url"`
+		ExpandedURL string `json:"expanded_url"`
+		URL         string `json:"url"`
+		Indices     []int  `json:"indices"`
+	}
+
 	// Photo type.
 	Photo struct {
 		ID  string
@@ -91,6 +99,25 @@ type (
 		GIFs      []GIF
 	}
 
+	ExtendedMedia struct {
+		IDStr                    string `json:"id_str"`
+		MediaURLHttps            string `json:"media_url_https"`
+		ExtSensitiveMediaWarning struct {
+			AdultContent    bool `json:"adult_content"`
+			GraphicViolence bool `json:"graphic_violence"`
+			Other           bool `json:"other"`
+		} `json:"ext_sensitive_media_warning"`
+		Type      string `json:"type"`
+		URL       string `json:"url"`
+		VideoInfo struct {
+			Variants []struct {
+				Type    string `json:"content_type"`
+				Bitrate int    `json:"bitrate"`
+				URL     string `json:"url"`
+			} `json:"variants"`
+		} `json:"video_info"`
+	}
+
 	legacyTweet struct {
 		ConversationIDStr string `json:"conversation_id_str"`
 		CreatedAt         string `json:"created_at"`
@@ -105,10 +132,7 @@ type (
 				Type          string `json:"type"`
 				URL           string `json:"url"`
 			} `json:"media"`
-			URLs []struct {
-				ExpandedURL string `json:"expanded_url"`
-				URL         string `json:"url"`
-			} `json:"urls"`
+			URLs         []Url `json:"urls"`
 			UserMentions []struct {
 				IDStr      string `json:"id_str"`
 				Name       string `json:"name"`
@@ -116,24 +140,7 @@ type (
 			} `json:"user_mentions"`
 		} `json:"entities"`
 		ExtendedEntities struct {
-			Media []struct {
-				IDStr                    string `json:"id_str"`
-				MediaURLHttps            string `json:"media_url_https"`
-				ExtSensitiveMediaWarning struct {
-					AdultContent    bool `json:"adult_content"`
-					GraphicViolence bool `json:"graphic_violence"`
-					Other           bool `json:"other"`
-				} `json:"ext_sensitive_media_warning"`
-				Type      string `json:"type"`
-				URL       string `json:"url"`
-				VideoInfo struct {
-					Variants []struct {
-						Type    string `json:"content_type"`
-						Bitrate int    `json:"bitrate"`
-						URL     string `json:"url"`
-					} `json:"variants"`
-				} `json:"video_info"`
-			} `json:"media"`
+			Media []ExtendedMedia `json:"media"`
 		} `json:"extended_entities"`
 		IDStr                 string `json:"id_str"`
 		InReplyToStatusIDStr  string `json:"in_reply_to_status_id_str"`
@@ -195,15 +202,10 @@ type (
 		Description         string `json:"description"`
 		Entities            struct {
 			Description struct {
-				Urls []interface{} `json:"urls"`
+				Urls []Url `json:"urls"`
 			} `json:"description"`
 			URL struct {
-				Urls []struct {
-					DisplayURL  string `json:"display_url"`
-					ExpandedURL string `json:"expanded_url"`
-					URL         string `json:"url"`
-					Indices     []int  `json:"indices"`
-				} `json:"urls"`
+				Urls []Url `json:"urls"`
 			} `json:"url"`
 		} `json:"entities"`
 		FastFollowersCount      int           `json:"fast_followers_count"`
