@@ -19,9 +19,12 @@ import (
 )
 
 const (
-	loginURL          = "https://api.twitter.com/1.1/onboarding/task.json"
-	logoutURL         = "https://api.twitter.com/1.1/account/logout.json"
-	oAuthURL          = "https://api.twitter.com/oauth2/token"
+	loginURL  = "https://api.twitter.com/1.1/onboarding/task.json"
+	logoutURL = "https://api.twitter.com/1.1/account/logout.json"
+	oAuthURL  = "https://api.twitter.com/oauth2/token"
+	// Doesn't require x-client-transaction-id header in auth. x-rate-limit-limit: 2000
+	bearerToken1 = "AAAAAAAAAAAAAAAAAAAAAFQODgEAAAAAVHTp76lzh3rFzcHbmHVvQxYYpTw%3DckAlMINMjmCwxUcaXbAN4XqJVdgMJaHqNOFgPMK0zN1qLqLQCF"
+	// Requires x-client-transaction-id header in auth.
 	bearerToken2      = "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
 	appConsumerKey    = "3nVuSoBZnx6U4vzUxf5w"
 	appConsumerSecret = "Bcs59EFbbsdF6Sl9Ng71smgStWEGwXXKSjYvPVt7qys"
@@ -147,7 +150,7 @@ func (s *Scraper) getFlowToken(data map[string]interface{}) (string, error) {
 // IsLoggedIn check if scraper logged in
 func (s *Scraper) IsLoggedIn() bool {
 	s.isLogged = true
-	s.setBearerToken(bearerToken2)
+	s.setBearerToken(bearerToken1)
 	req, err := http.NewRequest("GET", "https://api.twitter.com/1.1/account/verify_credentials.json", nil)
 	if err != nil {
 		return false
