@@ -65,6 +65,25 @@ func New() *Scraper {
 	}
 }
 
+// NewWithTransport creates a Scraper object with custom http transport
+func NewWithTransport(transport *http.Transport) *Scraper {
+	ts := http.DefaultTransport
+	if transport != nil {
+		ts = transport
+	}
+
+	jar, _ := cookiejar.New(nil)
+	return &Scraper{
+		bearerToken: bearerToken,
+		userAgent:   DefaultUserAgent,
+		client: &http.Client{
+			Jar:       jar,
+			Timeout:   DefaultClientTimeout,
+			Transport: ts,
+		},
+	}
+}
+
 func (s *Scraper) setBearerToken(token string) {
 	s.bearerToken = token
 	s.guestToken = ""
