@@ -511,9 +511,7 @@ func (s *Scraper) sign(method string, ref *url.URL) string {
 	return "OAuth " + b.String()
 }
 
-
-
-func (s *Scraper) AutoLogin(credentials... string ) error {
+func (s *Scraper) AutoLogin(credentials ...string) error {
 	var username, password, email, confirmation string
 	if len(credentials) < 2 || len(credentials) > 4 {
 		return fmt.Errorf("invalid credentials")
@@ -601,9 +599,56 @@ func (s *Scraper) initializeLoginFlow() (string, string, error) {
 		"flow_name": "login",
 		"input_flow_data": map[string]interface{}{
 			"flow_context": map[string]interface{}{
+				"referrer_context": map[string]interface{}{
+					"referral_details": "utm_source=google-play&utm_medium=organic",
+					"referrer_url":     "",
+				},
 				"debug_overrides": map[string]interface{}{},
 				"start_location":  map[string]interface{}{"location": "splash_screen"},
 			},
+		},
+		"subtask_versions": map[string]int{
+			"action_list":                          2,
+			"alert_dialog":                         1,
+			"app_download_cta":                     1,
+			"check_logged_in_account":              1,
+			"choice_selection":                     3,
+			"contacts_live_sync_permission_prompt": 0,
+			"cta":                                  7,
+			"email_verification":                   2,
+			"end_flow":                             1,
+			"enter_date":                           1,
+			"enter_email":                          2,
+			"enter_password":                       5,
+			"enter_phone":                          2,
+			"enter_recaptcha":                      1,
+			"enter_text":                           5,
+			"enter_username":                       2,
+			"generic_urt":                          3,
+			"in_app_notification":                  1,
+			"interest_picker":                      3,
+			"js_instrumentation":                   1,
+			"menu_dialog":                          1,
+			"notifications_permission_prompt":      2,
+			"open_account":                         2,
+			"open_home_timeline":                   1,
+			"open_link":                            1,
+			"phone_verification":                   4,
+			"privacy_options":                      1,
+			"security_key":                         3,
+			"select_avatar":                        4,
+			"select_banner":                        2,
+			"settings_list":                        7,
+			"show_code":                            1,
+			"sign_up":                              2,
+			"sign_up_review":                       4,
+			"tweet_selection_urt":                  1,
+			"update_users":                         1,
+			"upload_media":                         1,
+			"user_recommendations_list":            4,
+			"user_recommendations_urt":             1,
+			"wait_spinner":                         3,
+			"web_modal":                            1,
 		},
 	}
 	return s.doFlow(data)
@@ -640,13 +685,14 @@ func (s *Scraper) handleEnterUserIdentifier(flowToken, username string) map[stri
 		},
 	}
 }
+
 // identifier maybe email/screen_name/phone_number.
-func (s *Scraper) handleLoginEnterAlternateIdentifier(flowToken, identifier string) map[string]interface{}{
+func (s *Scraper) handleLoginEnterAlternateIdentifier(flowToken, identifier string) map[string]interface{} {
 	return map[string]interface{}{
 		"flow_token": flowToken,
 		"subtask_inputs": []map[string]interface{}{
 			{
-				"subtask_id":     "LoginEnterAlternateIdentifierSubtask",
+				"subtask_id": "LoginEnterAlternateIdentifierSubtask",
 				"enter_text": map[string]interface{}{"text": identifier, "link": "next_link"},
 			},
 		},
@@ -677,7 +723,6 @@ func (s *Scraper) handleTwoFactorAuth(flowToken, code string) map[string]interfa
 	}
 }
 
-
 func (s *Scraper) handleLoginAcid(flowToken, confirmation string) map[string]interface{} {
 	return map[string]interface{}{
 		"flow_token": flowToken,
@@ -695,7 +740,7 @@ func (s *Scraper) handleAccountDuplicationCheck(flowToken string) map[string]int
 		"flow_token": flowToken,
 		"subtask_inputs": []map[string]interface{}{
 			{
-				"subtask_id":     "AccountDuplicationCheck",
+				"subtask_id": "AccountDuplicationCheck",
 				"check_logged_in_account": map[string]interface{}{
 					"link": "AccountDuplicationCheck_false",
 				},
