@@ -31,8 +31,8 @@ func init() {
 
 	if authToken != "" && csrfToken != "" {
 		testScraper.SetAuthToken(twitterscraper.AuthToken{Token: authToken, CSRFToken: csrfToken})
-		if !testScraper.IsLoggedIn() {
-			panic("Invalid AuthToken")
+		if err := testScraper.IsLoggedIn(); err != nil {
+			panic(fmt.Sprintf("AuthToken() error = %v", err))
 		}
 		return
 	}
@@ -41,8 +41,8 @@ func init() {
 		var parsedCookies []*http.Cookie
 		json.NewDecoder(strings.NewReader(cookies)).Decode(&parsedCookies)
 		testScraper.SetCookies(parsedCookies)
-		if !testScraper.IsLoggedIn() {
-			panic("Invalid Cookies")
+		if err := testScraper.IsLoggedIn(); err != nil {
+			panic(fmt.Sprintf("SetCookies() error = %v", err))
 		}
 		return
 	}
@@ -90,13 +90,13 @@ func TestLoginPassword(t *testing.T) {
 	if err := scraper.Login(username, password, email); err != nil {
 		t.Fatalf("Login() error = %v", err)
 	}
-	if !scraper.IsLoggedIn() {
-		t.Fatalf("Expected IsLoggedIn() = true")
+	if err := scraper.IsLoggedIn(); err != nil {
+		t.Fatalf("IsLoggedIn() error = %v", err)
 	}
 	if err := scraper.Logout(); err != nil {
 		t.Errorf("Logout() error = %v", err)
 	}
-	if scraper.IsLoggedIn() {
+	if err := scraper.IsLoggedIn(); err == nil {
 		t.Error("Expected IsLoggedIn() = false")
 	}
 }
@@ -109,8 +109,8 @@ func TestLoginToken(t *testing.T) {
 	scraper := newTestScraper(true)
 
 	scraper.SetAuthToken(twitterscraper.AuthToken{Token: authToken, CSRFToken: csrfToken})
-	if !scraper.IsLoggedIn() {
-		t.Error("Expected IsLoggedIn() = true")
+	if err := scraper.IsLoggedIn(); err != nil {
+		t.Fatalf("AuthToken() error = %v", err)
 	}
 }
 
@@ -126,8 +126,8 @@ func TestLoginCookie(t *testing.T) {
 	json.NewDecoder(strings.NewReader(cookies)).Decode(&c)
 
 	scraper.SetCookies(c)
-	if !scraper.IsLoggedIn() {
-		t.Error("Expected IsLoggedIn() = true")
+	if err := scraper.IsLoggedIn(); err != nil {
+		t.Fatalf("SetCookies() error = %v", err)
 	}
 }
 
