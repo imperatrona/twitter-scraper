@@ -195,13 +195,7 @@ func parseLegacyTweet(user *legacyUser, tweet *legacyTweet) *Tweet {
 		tw.IsRetweet = true
 		tw.RetweetedStatusID = tweet.RetweetedStatusIDStr
 		if tweet.RetweetedStatusResult.Result != nil {
-			var legacy *legacyTweet = &tweet.RetweetedStatusResult.Result.Legacy
-			var user *legacyUser = &tweet.RetweetedStatusResult.Result.Core.UserResults.Result.Legacy
-			if tweet.RetweetedStatusResult.Result.Typename == "TweetWithVisibilityResults" {
-				legacy = &tweet.RetweetedStatusResult.Result.Tweet.Legacy
-				user = &tweet.RetweetedStatusResult.Result.Tweet.Core.UserResults.Result.Legacy
-			}
-			tw.RetweetedStatus = parseLegacyTweet(user, legacy)
+			tw.RetweetedStatus = tweet.RetweetedStatusResult.Result.parse()
 			tw.RetweetedStatusID = tw.RetweetedStatus.ID
 		}
 	}
