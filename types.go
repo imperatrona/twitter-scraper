@@ -39,6 +39,17 @@ type (
 		URL     string
 	}
 
+	MediaType string
+
+	// UnifiedMedia type represent a simplified ExtendedMedia
+	UnifiedMedia struct {
+		ID      string
+		Type    MediaType
+		URL     string
+		Preview *string
+		HLSURL  *string
+	}
+
 	// Tweet type.
 	Tweet struct {
 		ConversationID    string
@@ -75,6 +86,7 @@ type (
 		Videos            []Video
 		Views             int
 		SensitiveContent  bool
+		OrderedMedia      []UnifiedMedia // OrderedMedia keep the original order of media with mixed types
 	}
 
 	// ProfileResult of scrapping.
@@ -296,4 +308,10 @@ type (
 		CanHighlightTweets bool   `json:"can_highlight_tweets"`
 		HighlightedTweets  string `json:"highlighted_tweets"`
 	}
+)
+
+const (
+	MediaTypePhoto MediaType = "photo"
+	MediaTypeVideo MediaType = "video"
+	MediaTypeGIF   MediaType = "animated_gif"
 )
