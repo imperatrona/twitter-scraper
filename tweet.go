@@ -10,9 +10,15 @@ import (
 	"strings"
 )
 
+type TweetReply struct {
+	ReplyToTweetId string 
+	ExcludeReplyUserIds []string
+}
+
 type NewTweet struct {
 	Text   string
 	Medias []*Media
+	Reply *TweetReply
 }
 
 type newTweet struct {
@@ -75,6 +81,24 @@ func (s *Scraper) CreateTweet(tweet NewTweet) (*Tweet, error) {
 		"media":                   post_medias,
 		"semantic_annotation_ids": []string{},
 		"tweet_text":              tweet.Text,
+	}
+
+	// If reply is set 
+	if tweet.Reply != nil {
+		reply := map[string]interface{}{}
+
+		if tweet.Reply.ReplyToTweetId != "" {
+			reply["in_reply_to_tweet_id"] = tweet.Reply.ReplyToTweetId
+			reply["exclude_reply_user_ids"] = []string{}
+		}
+
+		if len(tweet.Reply.ExcludeReplyUserIds) > 0 {
+			reply["exclude_reply_user_ids"] = tweet.Reply.ExcludeReplyUserIds
+		}
+
+		if len(reply) > 0 {
+			variables["reply"] = reply
+		}
 	}
 
 	features := map[string]interface{}{
