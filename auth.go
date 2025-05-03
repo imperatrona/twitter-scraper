@@ -148,23 +148,34 @@ func (s *Scraper) getFlowToken(data map[string]interface{}) (string, error) {
 	return info.FlowToken, err
 }
 
-// IsLoggedIn check if scraper logged in
-func (s *Scraper) IsLoggedIn() bool {
+// IsLoggedIn check if scraper logged in using multiple bearer tokens
+func (s *Scraper) IsLoggedIn() error {
 	s.isLogged = true
-	s.setBearerToken(bearerToken1)
-	req, err := http.NewRequest("GET", "https://api.twitter.com/1.1/account/verify_credentials.json", nil)
-	if err != nil {
-		return false
+	var combinedErr error
+	tokens := []string{bearerToken1, bearerToken, bearerToken2}
+
+	for _, token := range tokens {
+		s.setBearerToken(token)
+		req, err := http.NewRequest("GET", "https://api.twitter.com/1.1/account/verify_credentials.json", nil)
+		if err != nil {
+			return fmt.Errorf("error creating request: %v", err)
+		}
+
+		var verify verifyCredentials
+		err = s.RequestAPI(req, &verify)
+		if err != nil || verify.Errors != nil {
+			if combinedErr == nil {
+				combinedErr = fmt.Errorf("error verifying credentials with token (%s): %v, %v", token, verify.Errors, err)
+			} else {
+				combinedErr = fmt.Errorf("%v; error verifying credentials with token (%s): %v, %v", combinedErr, token, verify.Errors, err)
+			}
+		} else {
+			// Success
+			return nil
+		}
 	}
-	var verify verifyCredentials
-	err = s.RequestAPI(req, &verify)
-	if err != nil || verify.Errors != nil {
-		s.isLogged = false
-		s.setBearerToken(bearerToken)
-	} else {
-		s.isLogged = true
-	}
-	return s.isLogged
+
+	return combinedErr
 }
 
 // randomDelay introduces a random delay between 1 and 3 seconds
