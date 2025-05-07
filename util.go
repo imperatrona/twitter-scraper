@@ -234,12 +234,18 @@ func parseLegacyTweet(user *legacyUser, tweet *legacyTweet) *Tweet {
 	}
 
 	for _, media := range tweet.ExtendedEntities.Media {
+		unifiedMedia := UnifiedMedia{
+			ID:   media.IDStr,
+			Type: MediaType(media.Type),
+		}
+
 		if media.Type == "photo" {
 			photo := Photo{
 				ID:  media.IDStr,
 				URL: media.MediaURLHttps,
 			}
 
+			unifiedMedia.URL = photo.URL
 			tw.Photos = append(tw.Photos, photo)
 		} else if media.Type == "video" {
 			video := Video{
@@ -258,6 +264,9 @@ func parseLegacyTweet(user *legacyUser, tweet *legacyTweet) *Tweet {
 				}
 			}
 
+			unifiedMedia.URL = video.URL
+			unifiedMedia.Preview = &video.Preview
+			unifiedMedia.HLSURL = &video.HLSURL
 			tw.Videos = append(tw.Videos, video)
 		} else if media.Type == "animated_gif" {
 			gif := GIF{
@@ -278,8 +287,12 @@ func parseLegacyTweet(user *legacyUser, tweet *legacyTweet) *Tweet {
 				}
 			}
 
+			unifiedMedia.Preview = &gif.Preview
+			unifiedMedia.URL = gif.URL
 			tw.GIFs = append(tw.GIFs, gif)
 		}
+
+		tw.OrderedMedia = append(tw.OrderedMedia, unifiedMedia)
 
 		if !tw.SensitiveContent {
 			sensitive := media.ExtSensitiveMediaWarning
