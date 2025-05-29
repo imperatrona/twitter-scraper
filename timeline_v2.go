@@ -1,6 +1,7 @@
 package twitterscraper
 
 import (
+	"encoding/json"
 	"strconv"
 	"strings"
 )
@@ -28,12 +29,48 @@ type tweet struct {
 		Result *result `json:"result"`
 	} `json:"quoted_status_result"`
 	Legacy legacyTweet `json:"legacy"`
+	Card   struct {
+		RestID string `json:"rest_id"`
+		Legacy struct {
+			BindingValues []struct {
+				Key   string `json:"key"`
+				Value struct {
+					StringValue string `json:"string_value"`
+				} `json:"value"`
+			} `json:"binding_values"`
+		} `json:"legacy"`
+	} `json:"card"`
 }
 
 type result struct {
 	Typename string `json:"__typename"`
 	tweet
 	Tweet tweet `json:"tweet"`
+}
+
+type UnifiedCard struct {
+	Type          string   `json:"type"`
+	Components    []string `json:"components"`
+	MediaEntities map[string]struct {
+		ID            int64  `json:"id"`
+		IDStr         string `json:"id_str"`
+		MediaURLHTTPS string `json:"media_url_https"`
+		Type          string `json:"type"`
+		OriginalInfo  struct {
+			Width  int `json:"width"`
+			Height int `json:"height"`
+		} `json:"original_info"`
+		SourceUserID int64 `json:"source_user_id"`
+		VideoInfo    struct {
+			AspectRatio    []int `json:"aspect_ratio"`
+			DurationMillis int   `json:"duration_millis"`
+			Variants       []struct {
+				Bitrate     int    `json:"bitrate,omitempty"`
+				ContentType string `json:"content_type"`
+				URL         string `json:"url"`
+			} `json:"variants"`
+		} `json:"video_info"`
+	} `json:"media_entities"`
 }
 
 func (result *result) parse() *Tweet {
@@ -56,6 +93,43 @@ func (result *result) parse() *Tweet {
 	if result.QuotedStatusResult.Result != nil {
 		tw.QuotedStatus = result.QuotedStatusResult.Result.parse()
 	}
+
+	// Get videos from cards
+	for _, v := range result.Tweet.Card.Legacy.BindingValues {
+		if v.Key == "unified_card" {
+			var card UnifiedCard
+			err := json.Unmarshal([]byte(v.Value.StringValue), &card)
+			if err != nil {
+				continue
+			}
+
+			for _, media := range card.MediaEntities {
+				if media.Type == "video" {
+					var vid Video
+
+					vid.ID = media.IDStr
+					vid.Preview = media.MediaURLHTTPS
+
+					var bitrate int
+					for _, variant := range media.VideoInfo.Variants {
+						if variant.ContentType == "video/mp4" {
+							if variant.Bitrate > bitrate {
+								bitrate = variant.Bitrate
+								vid.URL = variant.URL
+							}
+						} else if variant.ContentType == "application/x-mpegURL" {
+							vid.HLSURL = variant.URL
+						}
+					}
+
+					if vid.URL != "" {
+						tw.Videos = append(tw.Videos, vid)
+					}
+				}
+			}
+		}
+	}
+
 	return tw
 }
 
